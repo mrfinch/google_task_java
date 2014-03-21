@@ -15,7 +15,6 @@
 package com.google.api.services.samples.tasks.cmdline;
 
 import com.google.api.client.auth.oauth2.Credential;
-
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
@@ -38,9 +37,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
 
+import java.awt.*;
+import java.awt.List;
+import java.awt.event.*;
+import java.util.*;
 /**
  * Main class for the Tasks API command line sample.
  * Demonstrates how to make an authenticated API call using OAuth 2 helper classes.
@@ -72,6 +73,8 @@ public class TasksSample {
 
   @SuppressWarnings("unused")
   private static Tasks client;
+  
+  private static ArrayList<mycontainer> a = new ArrayList<mycontainer>();
 
   /** Authorizes the installed application to access user's protected data. */
   private static Credential authorize() throws Exception {
@@ -125,21 +128,27 @@ public class TasksSample {
 private static void showtasks() throws IOException{
 	  com.google.api.services.tasks.model.Tasks result1 = client.tasks().list("@default").execute();
 	  System.out.println(result1);
+	  
 	  JFrame frame = new JFrame("Google Tasks");
+	  frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	  
 	  JPanel main = new JPanel();
 	  main.setLayout(new BoxLayout(main, BoxLayout.Y_AXIS));
-	  frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-	  JCheckBox[] cbox = new JCheckBox[result1.getItems().size()];
+	  
+	  final int numitems = result1.getItems().size();
+	  
 	  int i=0;
+	  final JCheckBox[] cbox = new JCheckBox[result1.getItems().size()];
 	  JPanel panel1 = new JPanel(new GridLayout(0, 1)); 
 	  System.out.println(result1.getItems().size());
 	  for(Task task : result1.getItems()){
 		  cbox[i] = new JCheckBox(task.getTitle());
 		  panel1.add(cbox[i]);
+		  mycontainer x =new mycontainer(task.getTitle(),task.getId());
+		  a.add(x);
 		  i++;
 	  }
-	  main.add(panel1);
-	  System.out.println(1);
+	  
 	  JPanel panel2 = new JPanel(new GridLayout(0,1)); 
 	  JLabel label1 = new JLabel("Enter Task");
 	  final JTextField tf1 = new JTextField(50);
@@ -147,17 +156,16 @@ private static void showtasks() throws IOException{
 	  final JTextField tf2 = new JTextField(50);
 	  JLabel label3 = new JLabel("Days for completion");
 	  final JTextField tf3 = new JTextField(4);
-	  panel2.add(label1);
+	  panel2.add(label1);	
 	  panel2.add(tf1);
 	  panel2.add(label2);
 	  panel2.add(tf2);
 	  panel2.add(label3);
 	  panel2.add(tf3);
-	  main.add(panel2);
-	  System.out.println(2);
+	  
 	  JPanel panel3 = new JPanel();
 	  JButton insert = new JButton("Insert Task");
-	  final JLabel succ = new JLabel();
+	  final JLabel succ1 = new JLabel();
 	  insert.addActionListener(new ActionListener(){
 		  public void actionPerformed(ActionEvent e){
 			  String title = tf1.getText();
@@ -171,10 +179,10 @@ private static void showtasks() throws IOException{
 			  try {
 				result2 = client.tasks().insert("@default",task).execute();
 				if(result2.getTitle().equals(title)){
-					  succ.setText("Success");
+					  succ1.setText("Success");
 				}
 				else{
-					  succ.setText("Some field missing");
+					  succ1.setText("Some field missing");
 				}
 				System.out.println(5);
 			  } catch (IOException e1) {
@@ -185,9 +193,40 @@ private static void showtasks() throws IOException{
 		  }
 	  }
 			  );
-	  System.out.println(3);
 	  panel3.add(insert);
-	  panel3.add(succ);
+	  panel3.add(succ1);
+	  	  
+	  JPanel panel4 = new JPanel();
+	  JButton delete = new JButton("Delete Selected");
+	  final JLabel succ2 = new JLabel();
+	  delete.addActionListener(new ActionListener(){
+		  public void actionPerformed(ActionEvent e){
+			  ArrayList<Integer> d = new ArrayList<Integer>();
+			  String q = "Deleted:"+"\r\n ";
+			  for(int i=0;i<numitems;i++){
+				  if(cbox[i].isSelected()){
+					  try {
+						client.tasks().delete("@default", a.get(i).getMId()).execute();
+						q += "\r\n , " + a.get(i).getMName();
+						d.add(i);
+					} catch (IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}	
+				  }
+			  }
+			  succ2.setText(q);
+			  for(int i=0;i<d.size();i++){
+				  a.remove(d.get(i));
+			  }
+		  }
+	  });
+	  panel4.add(delete);
+	  panel4.add(succ2);
+	  
+	  main.add(panel1);
+	  main.add(panel4);
+	  main.add(panel2);
 	  main.add(panel3);
 	  
 	  frame.add(main);
@@ -220,14 +259,21 @@ public static void main(String[] args) {
           .setApplicationName(APPLICATION_NAME).build();
 
       System.out.println("Success! Now add code here.");
-      com.google.api.services.tasks.model.Tasks result = client.tasks().list("@default").execute();
+      /*com.google.api.services.tasks.model.Tasks result = client.tasks().list("@default").execute();
       
       System.out.println(result);
       System.out.println(result.getItems().size());
+     
       for(Task task : result.getItems()){
     	  System.out.println(task.getTitle());
+    	  System.out.println(task.getId());
+    	  mycontainer x = new mycontainer(task.getTitle(),task.getId());
+    	  a.add(x);
       }
       
+      for(int i=0;i<a.size();i++){
+    	  System.out.println("Task:"+a.get(i).getMName()+":"+a.get(i).getMId());
+      }*/
       showtasks();
     } catch (IOException e) {
       System.err.println(e.getMessage());
