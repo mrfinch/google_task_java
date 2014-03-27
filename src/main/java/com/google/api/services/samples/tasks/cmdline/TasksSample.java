@@ -196,7 +196,7 @@ private static void showtasks() throws IOException{
 	  panel3.add(insert);
 	  panel3.add(succ1);
 	  	  
-	  JPanel panel4 = new JPanel();
+	  JPanel panel4 = new JPanel(new GridLayout(0, 1));
 	  JButton delete = new JButton("Delete Selected");
 	  final JLabel succ2 = new JLabel();
 	  delete.addActionListener(new ActionListener(){
@@ -224,8 +224,34 @@ private static void showtasks() throws IOException{
 	  panel4.add(delete);
 	  panel4.add(succ2);
 	  
+	  JPanel panel5 = new JPanel();
+	  JButton complete = new JButton("Mark as Complete");
+	  final JLabel succ3 = new JLabel();
+	  complete.addActionListener(new ActionListener(){
+		  public void actionPerformed(ActionEvent e){
+			  String q = "Completed:";
+			  for(int i=0;i<numitems;i++){
+				  if(cbox[i].isSelected()){
+					  try {
+						  Task task = client.tasks().get("@default", a.get(i).getMId()).execute();
+						  task.setStatus("completed");
+						  
+						  Task res = client.tasks().update("@default",task.getId(),task).execute();
+						  q += "  "+task.getTitle()+" Completed on: "+res.getCompleted();
+					  } catch (IOException e1){
+						  e1.printStackTrace();
+					  }
+				  }
+			  }
+			  succ3.setText(q);
+		  }
+	  });
+	  panel4.add(complete);
+	  panel4.add(succ3);
+	  
 	  main.add(panel1);
 	  main.add(panel4);
+	  //main.add(panel5);
 	  main.add(panel2);
 	  main.add(panel3);
 	  
